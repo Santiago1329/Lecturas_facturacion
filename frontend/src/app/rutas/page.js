@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import Link from 'next/link'
 
 export default function RutasPage() {
     const [rutas, setRutas] = useState([])
@@ -62,6 +63,12 @@ export default function RutasPage() {
     return (
         <div className="max-w-4xl mx-auto p-8">
             <h1 className="text-2xl font-bold mb-6">Rutas</h1>
+            <Link
+                href="/rutas/nueva"
+                className='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700'
+            >
+                Cargar nueva ruta
+            </Link>
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 <table className='w-full text-left'>
