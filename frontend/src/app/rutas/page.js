@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
+import * as xlsx from 'xlsx'
 
 export default function RutasPage() {
     const [rutas, setRutas] = useState([])
@@ -48,6 +49,36 @@ export default function RutasPage() {
         }
     }, [router])
 
+    const descargarRuta = async (ruta) => {
+        const { data: medidores, error } = await supabase
+            .from('medidores')
+            .select()
+            .eq('ruta_id', ruta.id)
+            .order('orden_visita')
+        
+        if (error) {
+            alert('Error trayendo los medidores: ' + error.message)
+            return
+        }
+
+        const filas = medidores.map(m => ({
+            medidor: m.medidor,
+            direccion: m.direccion,
+            valor_anterior: m.valor_anterior,
+            valor_actual: m.valor_actual,
+            observacion: m.observacion,
+        }))
+
+        const hoja = xlsx.utils.json_to_sheet(filas)
+        const workbook = xlsx.utils.book_new()
+        xlsx.utils.book_append_sheet(workbook, hoja, 'Lecturas')
+
+        const nombreArchivo = `${ruta.nombre.replace(/[\s-]+/g, '_')}_completa.xlsx`
+        xlsx.writeFile(workbook, nombreArchivo) 
+
+        await supabase.from('rutas').update({ exportada: true }).eq('id', ruta.id);
+    }
+
     if (cargando) {
         return <div className="p-8">Cargando rutas...</div>
     }
@@ -76,6 +107,7 @@ export default function RutasPage() {
                             <th className="p-4">Estado</th>
                             <th className="p-4">Descargada</th>
                             <th className="p-4">Exportada</th>
+                            <th className="p-4"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -89,6 +121,16 @@ export default function RutasPage() {
                                 </td>
                                 <td className="p-4">{ruta.descargada ? 'Si' : 'No'}</td>
                                 <td className="p-4">{ruta.exportada ? 'Si' : 'No'}</td>
+                                <td className="p-4">
+                                    {ruta.estado === 'completa' && (
+                                        <button
+                                            onClick={() => descargarRuta(ruta)}
+                                            className='text-blue-600 cursor-pointer hover:underline text-sm'
+                                        >
+                                            Descargar .xlsx
+                                        </button>
+                                    )}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
