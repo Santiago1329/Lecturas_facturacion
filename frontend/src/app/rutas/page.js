@@ -12,7 +12,14 @@ export default function RutasPage() {
 
     useEffect(() => {
         let nombreCanal = `rutas-cambios-${Date.now()}`
-        let canal
+        const canal = supabase
+            .channel(nombreCanal)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'rutas' },
+                () => traerRutas()
+            )
+            .subscribe()
 
         async function traerRutas() {
             const { data, error } = await supabase
@@ -32,15 +39,6 @@ export default function RutasPage() {
             }
             
             await traerRutas()
-            
-            canal = supabase
-                .channel(nombreCanal)
-                .on(
-                    'postgres_changes',
-                    { event: '*', schema: 'public', table: 'rutas' },
-                    () => traerRutas()
-                )
-                .subscribe();
         }
 
         iniciar()
