@@ -86,7 +86,7 @@ export default function RutasPage() {
     const estadoColor = {
         pendiente: 'bg-gray-200 text-gray-700',
         en_progreso: 'bg-yellow-100 text-yellow-700',
-        completada: 'bg-green-100 text-green-700'
+        completa: 'bg-green-100 text-green-700'
     }
 
     return (
