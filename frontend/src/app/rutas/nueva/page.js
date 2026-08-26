@@ -5,6 +5,21 @@ import { useRouter } from 'next/navigation'
 import * as xlsx from 'xlsx'
 import { supabase } from '@/lib/supabaseClient'
 
+function normalizar(texto) {
+    return String(texto || '')
+        .toLowerCase()
+        .replace(/[\s_-]+/g, '')
+}
+
+function buscarValor(fila, posiblesNombres) {
+    const clavesFila = Object.keys(fila)
+    for (const nombres of posiblesNombres) {
+        const clave = clavesFila.find(k => normalizar(k) === normalizar(nombres))
+        if (clave !== undefined) return fila[clave]
+    }
+    return null
+}
+
 export default function NuevaRutaPage() {
     const [lectores, setLectores] = useState([])
     const [lectorId, setLectorId] = useState('')
@@ -31,13 +46,28 @@ export default function NuevaRutaPage() {
         try {
             const buffer = await archivo.arrayBuffer()
             const workbook = xlsx.read(buffer)
-            const hoja = workbook.Sheets[workbook.SheetNames[0]]
-            const filas = xlsx.utils.sheet_to_json(hoja)
+
+            const nombreHojaDatos = workbook.SheetNames.find(
+                (n) => normalizar(n) !== 'hoja2' && normalizar(n) !== 'sheet1'
+            )
+            const hojaDatos = workbook.Sheets[nombreHojaDatos]
+            const filas = xlsx.utils.sheet_to_json(hojaDatos)
 
             if (filas.length === 0) {
                 setMensaje({tipo: 'error', texto: 'El archivo está vacío.'})
                 setCargando(false)
                 return
+            }
+
+            let opciones = []
+            const hojaOpciones = workbook.Sheets['Hoja2']
+            if (hojaOpciones) {
+                const filasOpciones = xlsx.utils.sheet_to_json(hojaOpciones, {
+                    header: 1
+                })
+                opciones = filasOpciones
+                    .map(f => f[0])
+                    .filter(v => v && normalizar(v) !== 'descripcion')
             }
 
             const { data: ruta, error: errorRuta } = await supabase
@@ -46,7 +76,8 @@ export default function NuevaRutaPage() {
                     nombre: nombreRuta,
                     estado: 'pendiente',
                     lector_id: lectorId,
-                    descargada: false
+                    descargada: false,
+                    opciones_nl_lc: opciones,
                 })
                 .select()
                 .single()
@@ -55,11 +86,19 @@ export default function NuevaRutaPage() {
 
             const medidores = filas.map((fila, index) => ({
                 ruta_id: ruta.id,
-                medidor: fila.medidor,
-                direccion: fila.direccion,
-                valor_anterior: fila.valor_anterior,
+                codigo: buscarValor(fila, ['codigo']),
+                lect_ant: buscarValor(fila, ['lect_ant', 'lect ant']),
+                cons_ant: buscarValor(fila, ['cons_ant', 'cons-ant', 'cons ant']),
+                lect_act: buscarValor(fila, ['lect - act', 'lect-act', 'lect_act']),
+                cons_act: buscarValor(fila, ['cons- act', 'cons-act', 'cons_act']),
+                descripcion: buscarValor(fila, ['descripcion']),
+                promedio: buscarValor(fila, ['prom']),
+                serie: buscarValor(fila, ['serie']),
+                lect_rev: buscarValor(fila, ['lect rev', 'lect_rev']),
+                nl_lc: buscarValor(fila, ['nl/lc', 'nl-lc', 'nllc']),
+                observacion: buscarValor(fila, ['observacion']) || '',
                 orden_visita: index + 1,
-            }))
+            }));
 
             const { error: errorMedidores } = await supabase
                 .from('medidores')
