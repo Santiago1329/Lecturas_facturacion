@@ -59,17 +59,6 @@ export default function NuevaRutaPage() {
                 return
             }
 
-            let opciones = []
-            const hojaOpciones = workbook.Sheets['Hoja2']
-            if (hojaOpciones) {
-                const filasOpciones = xlsx.utils.sheet_to_json(hojaOpciones, {
-                    header: 1
-                })
-                opciones = filasOpciones
-                    .map(f => f[0])
-                    .filter(v => v && normalizar(v) !== 'descripcion')
-            }
-
             const { data: ruta, error: errorRuta } = await supabase
                 .from('rutas')
                 .insert({
@@ -77,7 +66,6 @@ export default function NuevaRutaPage() {
                     estado: 'pendiente',
                     lector_id: lectorId,
                     descargada: false,
-                    opciones_nl_lc: opciones,
                 })
                 .select()
                 .single()
