@@ -62,10 +62,18 @@ export default function RutasPage() {
         }
 
         const filas = medidores.map(m => ({
-            medidor: m.medidor,
+            codigo: m.codigo,
+            nombre_cliente: m.nombre_cliente,
             direccion: m.direccion,
-            valor_anterior: m.valor_anterior,
-            valor_actual: m.valor_actual,
+            lect_ant: m.lect_ant,
+            lect_act: m.lect_act,
+            cons_ant: m.cons_ant,
+            cons_act: m.cons_act,
+            descripcion: m.descripcion,
+            promedio: m.promedio,
+            serie: m.serie,
+            lect_rev: m.lect_rev,
+            nl_lc: m.nl_lc,
             observacion: m.observacion,
         }))
 
