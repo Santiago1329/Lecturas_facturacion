@@ -23,12 +23,26 @@ export default function RutasPage() {
             .subscribe()
 
         async function traerRutas() {
-            const { data, error } = await supabase
-                .from('rutas')
-                .select()
-                .order('id', { ascending: false })
+            const [{ data: rutasData, error }, { data: lectoresData }] = await Promise.all([
+                supabase.from('rutas').select().order('id', { ascending: false }),
+                supabase.from('lectores').select('id, nombre')
+            ])
 
-            if (!error) setRutas(data)
+            if (error) {
+                setCargando(false)
+                return
+            }
+
+            const mapaLectores = Object.fromEntries(
+                (lectoresData || []).map(l => [l.id, l.nombre])
+            )
+
+            const rutasConNombre = rutasData.map(r => ({
+                ...r,
+                lector_nombre: mapaLectores[r.lector_id] || '-'
+            }))
+
+            setRutas(rutasConNombre)
             setCargando(false)
         }
         
@@ -112,9 +126,8 @@ export default function RutasPage() {
                     <thead className='bg-gray-50 border-b'>
                         <tr>
                             <th className="p-4">Nombre</th>
+                            <th className="p-4">Encargado</th>
                             <th className="p-4">Estado</th>
-                            <th className="p-4">Descargada</th>
-                            <th className="p-4">Exportada</th>
                             <th className="p-4"></th>
                         </tr>
                     </thead>
@@ -122,13 +135,12 @@ export default function RutasPage() {
                         {rutas.map(ruta =>(
                             <tr key={ruta.id} className='border-b last:border:0'>
                                 <td className="p-4">{ruta.nombre}</td>
+                                <td className="p-4">{ruta.lector_nombre}</td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded text-sm ${estadoColor[ruta.estado]}`}>
                                         {ruta.estado}
                                     </span>
                                 </td>
-                                <td className="p-4">{ruta.descargada ? 'Si' : 'No'}</td>
-                                <td className="p-4">{ruta.exportada ? 'Si' : 'No'}</td>
                                 <td className="p-4">
                                     {ruta.estado === 'completa' && (
                                         <button
