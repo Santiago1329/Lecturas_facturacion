@@ -105,6 +105,7 @@ export default function RutasPage() {
         if (!confirm(`Borrar la ruta "${ruta.nombre}"? Esta accion no se puede deshacer.`)) return
         await supabase.from('medidores').delete().eq('ruta_id', ruta.id);
         await supabase.from('rutas').delete().eq('id', ruta.id);
+        setRutas((prev) => prev.filter((r) => r.id !== ruta.id));
     }
 
     if (cargando) {
