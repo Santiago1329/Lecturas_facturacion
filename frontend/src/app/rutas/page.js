@@ -101,6 +101,12 @@ export default function RutasPage() {
         await supabase.from('rutas').update({ exportada: true }).eq('id', ruta.id);
     }
 
+    const borrarRuta = async (ruta) => {
+        if (!confirm(`Borrar la ruta "${ruta.nombre}"? Esta accion no se puede deshacer.`)) return
+        await supabase.from('medidores').delete().eq('ruta_id', ruta.id);
+        await supabase.from('rutas').delete().eq('id', ruta.id);
+    }
+
     if (cargando) {
         return <div className="p-8">Cargando rutas...</div>
     }
@@ -141,15 +147,21 @@ export default function RutasPage() {
                                         {ruta.estado}
                                     </span>
                                 </td>
-                                <td className="p-4">
+                                <td className="p-4 flex gap-3">
                                     {ruta.estado === 'completa' && (
                                         <button
                                             onClick={() => descargarRuta(ruta)}
-                                            className='text-blue-600 cursor-pointer hover:underline text-sm'
+                                            className='bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer hover:bg-blue-700'
                                         >
-                                            Descargar .xlsx
+                                            Descargar
                                         </button>
                                     )}
+                                    <button
+                                        onClick={() => borrarRuta(ruta)}
+                                        className='bg-red-600 text-white px-3 py-1 rounded text-sm cursor-pointer hover:bg-red-700'
+                                    >
+                                        Borrar
+                                    </button>
                                 </td>
                             </tr>
                         ))}
